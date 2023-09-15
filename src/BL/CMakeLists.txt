@@ -4,9 +4,7 @@ project( ${PROJECT_NAME} CXX )
 
 add_library_( ${PROJECT_NAME} STATIC 
     DEPENDS
-#        Boost::boost
-#        cpp-jwt::cpp-jwt
-#        OpenSSL::Crypto
+        NetUI
         base
 )
 

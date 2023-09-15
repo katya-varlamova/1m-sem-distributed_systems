@@ -38,3 +38,4 @@ find_package(spdlog REQUIRED) # spdlog::spdlog
 find_package(OpenSSL REQUIRED) # OpenSSL::SSL OpenSSL::Crypto
 find_package(cpp-jwt REQUIRED)
 find_package(jsoncpp REQUIRED)
+find_package(oatpp REQUIRED)
