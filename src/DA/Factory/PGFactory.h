@@ -4,17 +4,17 @@
 
 #include "Connection/PGConnection.h"
 #include "Facade/PGFacade.h"
-#include "IFactory.h"
+#include "IDAFactory.h"
 #include "Repositories/PGUserRepository.h"
 
-class PGFactory : public IFactory
+class PGDAFactory : public IDAFactory
 {
 public:
-    PGFactory (const std::shared_ptr<BaseConfig>& config )
-      : m_config( config )
+    BOOST_DI_INJECT( PGDAFactory, const std::shared_ptr<BaseConfig>& config )
+            : m_config( config )
     {}
     IDAFacadePtr CreateDAFacade() override;
-    ~PGFactory() = default;
+    ~PGDAFactory() = default;
 
 protected:
     IUserRepositoryPtr CreateUserRepository();

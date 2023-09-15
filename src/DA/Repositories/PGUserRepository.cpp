@@ -4,14 +4,10 @@ PGUserRepository::ParseUser( std::map<std::string, std::string> strs )
 {
     return User(
       std::stoi( strs[std::string( "id" )] ),
-      strs[std::string( "login" )],
-      "",
       strs[std::string( "name" )],
-      strs[std::string( "birthdate" )],
-      strs[std::string( "accountdata" )],
-      strs[std::string( "contact" )],
-      strs[std::string( "photolink" )],
-      StrToGender( std::string( strs["gender"] ) )
+      strs[std::string( "address" )],
+      strs[std::string( "work" )],
+      std::stoi(strs[std::string( "age" )])
     );
 }
 std::vector<User> PGUserRepository::GetUsers() {
@@ -87,30 +83,16 @@ int
 PGUserRepository::CreateUser( const User& user )
 {
     m_connectionCreator->CheckConnectAndReopenIfNeeded( m_conn );
-    auto gen = GenderToStr( user.gender );
-    const char* paramValues[8] = {
-            user.login.c_str(),    user.password.c_str(),
-            user.name.c_str(),     user.birthDate.c_str(),
-            gen.c_str(),           user.contact.c_str(),
-            user.userData.c_str(), user.photo_link.c_str()
-    };
-    int paramLengths[8];
-    for ( int i = 0; i < 8; i++ )
-        paramLengths[i] = (int)strlen( paramValues[i] );
-    int paramFormats[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
 
-    PGresult* pgRes = PQexecParams(
-            m_conn,
-            "insert into person (login, password, name, birthDate, "
-            "gender, contact, accountData, photoLink) values "
-            "($1, $2, $3, $4, $5, $6, $7, $8) returning id;",
-            8,
-            NULL,
-            paramValues,
-            paramLengths,
-            paramFormats,
-            0
+    std::string query(
+            "insert into person (name, age, address, work) values ('"
+            + user.name + "', "
+            + std::to_string(user.age) + ", '"
+            + user.address + "', '"
+            + user.work + "') returning id;"
     );
+
+    PGresult* pgRes = PQexec( m_conn, query.c_str() );
 
     if ( PQresultStatus( pgRes ) != PGRES_TUPLES_OK ) {
         LoggerFactory::GetLogger()->LogWarning(
@@ -142,33 +124,16 @@ void
 PGUserRepository::UpdateUserByID( int id, const User& user )
 {
     m_connectionCreator->CheckConnectAndReopenIfNeeded( m_conn );
-    auto gen = GenderToStr( user.gender );
-    const char* paramValues[8] = {
-        user.login.c_str(),    user.password.c_str(),
-        user.name.c_str(),     user.birthDate.c_str(),
-        gen.c_str(),           user.contact.c_str(),
-        user.userData.c_str(), user.photo_link.c_str()
-    };
-    int paramLengths[8];
-    for ( int i = 0; i < 8; i++ )
-        paramLengths[i] = (int)strlen( paramValues[i] );
-    int paramFormats[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
-
-    PGresult* pgRes = PQexecParams(
-      m_conn,
-      ( "update Person set login = $1, password = $2, name = $3, "
-        "birthDate = $4, gender = $5, contact = $6, accountData = $7, "
-        "photoLink = $8"
-        " where id = " +
-        std::to_string( id ) + ";" )
-        .c_str(),
-      8,
-      NULL,
-      paramValues,
-      paramLengths,
-      paramFormats,
-      0
+    std::string query(
+            "update Person set "
+            "name = '" + user.name + "', "
+            "age = " + std::to_string(user.age) + ", "
+            "address = '" + user.address + "', "
+            "work = '"+ user.work + "' where id = " +
+            std::to_string( id ) + ";"
     );
+
+    PGresult* pgRes = PQexec( m_conn, query.c_str() );
 
     if ( PQresultStatus( pgRes ) != PGRES_COMMAND_OK ) {
         LoggerFactory::GetLogger()->LogWarning(

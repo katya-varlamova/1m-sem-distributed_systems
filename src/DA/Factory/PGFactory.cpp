@@ -1,6 +1,6 @@
 #include "PGFactory.h"
 IDAFacadePtr
-PGFactory::CreateDAFacade()
+PGDAFactory::CreateDAFacade()
 {
     if ( m_idaFacade )
         return m_idaFacade;
@@ -12,7 +12,7 @@ PGFactory::CreateDAFacade()
     );
 }
 IUserRepositoryPtr
-PGFactory::CreateUserRepository()
+PGDAFactory::CreateUserRepository()
 {
     PGConnectionCreatorPtr connectionCreator =
       PGConnectionCreatorPtr( new PGConnection( m_config ) );
