@@ -11,8 +11,10 @@ add_library_( ${PROJECT_NAME} STATIC
 target_sources( ${PROJECT_NAME} 
     PRIVATE
         IDAFacade.cpp
-        IFactory.h
+        IDAFactory.h
         IDAFacade.h
         structs/User.cpp
         structs/User.h
+        BLFacade.cpp
+        BLFacade.h
 )

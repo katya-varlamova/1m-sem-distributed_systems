@@ -3,11 +3,11 @@
 #include <memory>
 
 #include "IDAFacade.h"
-class IFactory
+class IDAFactory
 {
 public:
     virtual IDAFacadePtr CreateDAFacade() = 0;
-    virtual ~IFactory() = default;
+    virtual ~IDAFactory() = default;
 
 };
-using IFactoryPtr = std::shared_ptr<IFactory>;
+using IDAFactoryPtr = std::shared_ptr<IDAFactory>;

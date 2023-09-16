@@ -12,7 +12,7 @@ public:
     virtual void UpdateUserByID( int id, const User& user ) = 0;
     virtual void DeleteUserByID( int id ) = 0;
 
-    virtual ~IDAFacade() = 0;
+    virtual ~IDAFacade() = default;
 };
 
 using IDAFacadePtr = std::shared_ptr<IDAFacade>;

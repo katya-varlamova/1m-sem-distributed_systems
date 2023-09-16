@@ -22,14 +22,14 @@ std::string CONFIG_PATH;
 IDAFacadePtr
 preapre()
 {
-    CONFIG_PATH = "/Users/kate/Desktop/distributed_systems/src/DA/DAUnits/ConfigDA.yml";// boost::unit_test::framework::master_test_suite().argv[1];
-
+    CONFIG_PATH = boost::unit_test::framework::master_test_suite().argv[1];
     if ( !f ) {
         auto injector = di::make_injector(
                 di::bind<BaseConfig>().to<YamlCppConfig>(),
                 di::bind<std::string>.named( configFileName ).to( CONFIG_PATH ),
                 di::bind<IDAFactory>().to<PGDAFactory>());
         auto factory = injector.create<IDAFactoryPtr>();
+        LoggerFactory::InitLogger( injector.create<BaseConfigPtr>() );
         f = factory->CreateDAFacade();
     }
     return f;
