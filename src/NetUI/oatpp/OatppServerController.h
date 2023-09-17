@@ -114,7 +114,9 @@ public:
             PersonDto->address = u.address;
             PersonDto->age = u.age;
             PersonDto->id = id;
-            return _return(controller->createDtoResponse(Status::CODE_200, PersonDto));
+            auto response = controller->createResponse(Status::CODE_201);
+            response->putHeader("Location", "/api/v1/persons/" + std::to_string(id));
+            return _return(response);
         }
 
     };

@@ -31,16 +31,16 @@ headers = {'Content-type': 'application/json', 'Accept': 'text/'}
 class TestMain(unittest.TestCase):
   # positives
   def test_crd(self):
-    pid = requests.post(URL, headers=headers, data = p1j).json()["id"]
+    pid = requests.post(URL, headers=headers, data = p1j).headers["Location"].split("/")[4]
     data = requests.get(URL + "/" + str(pid), headers=headers).json()
 
     status = requests.delete(URL + "/" + str(pid), headers=headers).status_code
     exp = status == 204 and data["name"] == p1["name"] and data["age"] == p1["age"] and data["address"] == p1["address"] and data["work"] == p1["work"]
     self.assertEqual(exp, True)
   def test_get_all(self):
-    id1 = requests.post(URL, headers=headers, data = p1j).json()["id"]
-    id2 = requests.post(URL, headers=headers, data = p2j).json()["id"]
-    id3 = requests.post(URL, headers=headers, data = p3j).json()["id"]
+    id1 = requests.post(URL, headers=headers, data = p1j).headers["Location"].split("/")[4]
+    id2 = requests.post(URL, headers=headers, data = p2j).headers["Location"].split("/")[4]
+    id3 = requests.post(URL, headers=headers, data = p3j).headers["Location"].split("/")[4]
     
     data = requests.get(URL, headers=headers).json()
     exp = len(data) == 3
@@ -50,7 +50,7 @@ class TestMain(unittest.TestCase):
     requests.delete(URL + "/" + str(id3), headers=headers)
     self.assertEqual(exp, True)
   def test_upd(self):
-    id1 = requests.post(URL, headers=headers, data = p1j).json()["id"]
+    id1 = requests.post(URL, headers=headers, data = p1j).headers["Location"].split("/")[4]
     
     r = requests.patch(URL + "/" + str(id1), headers=headers, data = p_updj)
     data = r.json()
@@ -64,13 +64,13 @@ class TestMain(unittest.TestCase):
     exp = r.status_code == 404
     self.assertEqual(exp, True)
   def test_upd_inv_data(self):
-    id1 = requests.post(URL, headers=headers, data = p1j).json()["id"]
+    id1 = requests.post(URL, headers=headers, data = p1j).headers["Location"].split("/")[4]
     r = requests.patch(URL + "/" + str(id1), headers=headers, data = p_invj)
     exp = r.status_code == 400
     requests.delete(URL + "/" + str(id1), headers=headers)
     self.assertEqual(exp, True)
   def test_upd_inv_type_id(self):
-    id1 = requests.post(URL, headers=headers, data = p1j).json()["id"]
+    id1 = requests.post(URL, headers=headers, data = p1j).headers["Location"].split("/")[4]
     r = requests.patch(URL + "/" + "smth", headers=headers, data = p_updj)
     exp = r.status_code == 400
     requests.delete(URL + "/" + str(id1), headers=headers)
