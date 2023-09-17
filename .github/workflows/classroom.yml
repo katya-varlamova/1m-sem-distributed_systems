@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - lab_01
   pull_request:
     branches:
       - master
@@ -55,7 +56,7 @@ jobs:
     - name: run_units
       run: |
         chmod +x build/DA/DAUnits/DAUnits
-        bash build/DA/DAUnits/DAUnits src/Configs/ConfigGH.yml
+        ./build/DA/DAUnits/DAUnits src/Configs/ConfigGH.yml
 
   int_tests:
     needs: build
@@ -89,26 +90,61 @@ jobs:
     - name: run_itests
       run: |
         chmod +x build/main/main
-        bash build/main/main src/Configs/ConfigGH.yml &
+        ./build/main/main src/Configs/ConfigGH.yml &
         sleep 10
         python3 src/itests/itest.py
+  api_tests:
+    needs: build
+    runs-on: ubuntu-latest
+    container: katyavarlamova/ds-project
+    services:
+      postgres:
+        image: library/postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
 
+        ports:
+          - 5432:5432
 
-  autograde:
-      name: Autograding
-      runs-on: ubuntu-latest
-      needs: [integration-test]
-      steps:
-        - name: Autograding
-          uses: education/autograding@v1
-          continue-on-error: true
+        # set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@master
+      with:
+        name: build-artifact
+        path: ./build
+    - name: init_database
+      run: |
+        bash postgres/db_startup.sh postgres 5432 postgres postgres
+    - name: run_server
+      run: |
+        chmod +x build/main/main
+        ./build/main/main src/Configs/ConfigGH.yml &
+        sleep 10
+    - name: Run API Tests
+      uses: matt-ball/newman-action@master
+      with:
+        collection: postman/[inst] Lab1.postman_collection.json
+        environment: postman/[inst][local] Lab1.postman_environment.json
+        delayRequest: 100
+        reporters: '[ "cli" ]'
 
-        - name: Github auto grader mark
-          uses: Romanow/google-sheet-autograder-marker@v1.0
-          with:
-            google_token: ${{secrets.GOOGLE_API_KEY}}
-            sheet_id: "1xkgjUX6Qmk7rdJG-QPOToav-HWWtthJjnShIKnw3oIY"
-            homework_number: 1
-            user_column: 'D'
-            column_offset: 'F'
-            mark: "'+"
+    - name: Autograding
+      uses: education/autograding@v1
+      continue-on-error: true
+
+    - name: Github auto grader mark
+      uses: Romanow/google-sheet-autograder-marker@v1.0
+      with:
+        google_token: ${{secrets.GOOGLE_API_KEY}}
+        sheet_id: "1xkgjUX6Qmk7rdJG-QPOToav-HWWtthJjnShIKnw3oIY"
+        homework_number: 1
+        user_column: 'D'
+        column_offset: 'F'
+        mark: "'+"
