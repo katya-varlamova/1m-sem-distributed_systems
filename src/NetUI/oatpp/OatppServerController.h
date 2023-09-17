@@ -150,16 +150,20 @@ public:
                 dto->errors = errors;
                 return _return(controller->createDtoResponse(Status::CODE_400, dto));
             }
-
+            User u_old;
             try {
-                facade->GetUserByID(id);
+                u_old = facade->GetUserByID(id);
             } catch (const DatabaseException &err) {
                 auto dto = ErrorResponse::createShared();
                 dto->message = "Not found with such ID!";
                 return _return(controller->createDtoResponse(Status::CODE_404, dto));
             }
 
-            User u(id, body->name, body->address, body->work, body->age);
+            User u(id,
+                   body->name ? *body->name : u_old.name,
+                   body->address ? *body->address : u_old.address,
+                   body->work ? *body->work : u_old.work,
+                   body->age != nullptr ? *body->age : u_old.age);
             try {
                 facade->UpdateUserByID(id, u);
             } catch (const DatabaseException &err) {
