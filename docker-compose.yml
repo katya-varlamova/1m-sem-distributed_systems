@@ -12,7 +12,16 @@ services:
       - db-data:/var/lib/postgresql/data
       - ./postgres/:/docker-entrypoint-initdb.d/
     ports:
-      - "5432:5432"
-
-volumes:
-  db-data:
+      - "5434:5432"
+  back:
+    image: ds-project
+    container_name: ds-container
+    restart: on-failure
+    #command: cd /src && mkdir build && cd build && cmake .. && make && cd Main && ./main ../../Configs/Config.yml & cd ../../itests && python3 itests.py
+    ports:
+      - "8000:8000"
+    network_mode: host
+    volumes:
+      - ./src:/src
+  
+  

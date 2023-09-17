@@ -1,7 +1,10 @@
 import unittest
 import json
 import requests
-URL = "http://127.0.0.1:8000/api/v1/persons"
+import sys
+HOST="127.0.0.1"
+URL = "http://" + HOST + ":8000/api/v1/persons"
+
 p1 = {"name" : "katya",
       "age" : 22,
       "address" : "moscow",
@@ -98,6 +101,10 @@ class TestMain(unittest.TestCase):
   def test_get_inv_id(self):
     r = requests.get(URL + "/" + "4579827", headers=headers)
     exp = r.status_code == 404
-if __name__ == "__main__":
-  unittest.main()
+
+if len(sys.argv) > 1:
+  HOST = str(sys.argv[1])
+  URL = "http://" + HOST + ":8000/api/v1/persons"
+  del sys.argv[1:]
+unittest.main()
     
