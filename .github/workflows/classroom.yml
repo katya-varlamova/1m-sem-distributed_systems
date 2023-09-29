@@ -3,38 +3,134 @@ on:
   push:
     branches:
       - master
+      - lab_01
   pull_request:
     branches:
       - master
 jobs:
   build:
-    name: Autograding
+
     runs-on: ubuntu-latest
+    container: katyavarlamova/ds-project
+
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+    - uses: actions/checkout@v2
+    - name: build
+      run: |
+        mkdir build && cd build
+        cmake ../src
+        make -j12
+    - uses: actions/upload-artifact@master
+      with:
+        name: build-artifact
+        path: ./build
+  unit_tests:
+    needs: build
+    runs-on: ubuntu-latest
+    container: katyavarlamova/ds-project
+    services:
+      postgres:
+        image: library/postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
 
-      # TODO build, test and deploy project
+        ports:
+          - 5432:5432
 
-      - name: Run API Tests
-        uses: matt-ball/newman-action@master
-        with:
-          collection: postman/[inst] Lab1.postman_collection.json
-          environment: postman/[inst][heroku] Lab1.postman_environment.json
-          delayRequest: 100
-          reporters: '[ "cli" ]'
+        # set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@master
+      with:
+        name: build-artifact
+        path: ./build
+    - name: init_database
+      run: |
+        bash postgres/db_startup.sh postgres 5432 postgres postgres
+    - name: run_units
+      run: |
+        chmod +x build/DA/DAUnits/DAUnits
+        ./build/DA/DAUnits/DAUnits src/Configs/ConfigGH.yml
 
-      - name: Autograding
-        uses: education/autograding@v1
-        continue-on-error: true
+  int_tests:
+    needs: build
+    runs-on: ubuntu-latest
+    container: katyavarlamova/ds-project
+    services:
+      postgres:
+        image: library/postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
 
-      - name: Github auto grader mark
-        uses: Romanow/google-sheet-autograder-marker@v1.0
-        with:
-          google_token: ${{secrets.GOOGLE_API_KEY}}
-          sheet_id: "1xkgjUX6Qmk7rdJG-QPOToav-HWWtthJjnShIKnw3oIY"
-          homework_number: 1
-          user_column: 'D'
-          column_offset: 'F'
-          mark: "'+"
+        ports:
+          - 5432:5432
+
+        # set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@master
+      with:
+        name: build-artifact
+        path: ./build
+    - name: init_database
+      run: |
+        bash postgres/db_startup.sh postgres 5432 postgres postgres
+    - name: run_itests
+      run: |
+        chmod +x build/main/main
+        ./build/main/main src/Configs/ConfigGH.yml &
+        sleep 10
+        python3 src/itests/itest.py
+  api_tests:
+    needs: build
+    runs-on: ubuntu-latest
+    container: katyavarlamova/ds-project
+    services:
+      postgres:
+        image: library/postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+
+        ports:
+          - 5432:5432
+
+        # set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@master
+      with:
+        name: build-artifact
+        path: ./build
+    - name: init_database
+      run: |
+        bash postgres/db_startup.sh postgres 5432 postgres postgres
+    - name: run_server
+      run: |
+        chmod +x build/main/main
+        ./build/main/main src/Configs/ConfigGH.yml &
+        sleep 10
+    - name: Run API Tests
+      uses: matt-ball/newman-action@master
+      with:
+        collection: postman/[inst] Lab1.postman_collection.json
+        environment: postman/[inst][local] Lab1.postman_environment.json
+        delayRequest: 100
+        reporters: '[ "cli" ]'
